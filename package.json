@@ -18,5 +18,14 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yakshat-pipaliya/postgresql.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yakshat-pipaliya/postgresql/issues"
+  },
+  "homepage": "https://github.com/yakshat-pipaliya/postgresql#readme",
   "description": ""
 }
