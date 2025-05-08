@@ -1,0 +1,22 @@
+<h2>Category-wise Sales sum</h2>
+
+<% if (sum.length > 0) { %>
+    <table border="1" cellpadding="10" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Total Sales</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% sum.forEach(item => { %>
+                <tr>
+                    <td><%= item.category %></td>
+                    <td><%= item.total_sales %></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+<% } else { %>
+    <p>No data available to summarize.</p>
+<% } %>

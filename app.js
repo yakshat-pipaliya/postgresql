@@ -1,9 +1,8 @@
 const express = require('express');
 const { Client } = require('pg');
 const bodyParser = require('body-parser');
-const createError = require('http-errors'); 
+const createError = require('http-errors');
 require('dotenv').config();
-
 
 const app = express();
 
@@ -22,57 +21,56 @@ client.connect()
     .then(() => {
         console.log('Connected to PostgreSQL!');
         const createTableQuery = `
-            CREATE TABLE IF NOT EXISTS public.users (
+            CREATE TABLE IF NOT EXISTS ecommerce (
                 id SERIAL PRIMARY KEY,
-                username VARCHAR(255) NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                phoneno VARCHAR(20),
-                city VARCHAR(100)
+                product VARCHAR(255) NOT NULL,
+                category VARCHAR(255) NOT NULL,
+                amount NUMERIC
             );
         `;
         return client.query(createTableQuery);
     })
     .then(() => {
-        console.log('Users table is ready!');
+        console.log('Ecommerce table is ready!');
     })
     .catch(err => console.error('Connection error or table creation failed', err));
 
 app.get('/', (req, res, next) => {
-    const qry = `SELECT * FROM public.users ORDER BY id ASC`;
+    const qry = `SELECT * FROM ecommerce ORDER BY id ASC`;
     client.query(qry, (error, result) => {
         if (error) {
             console.error(error);
-            return next(createError(500, 'Database error')); 
+            return next(createError(500, 'Database error'));
         }
         res.render('index', { result: result.rows, editResult: null });
     });
 });
 
 app.post('/createData', (req, res, next) => {
-    const { id, username, password, number, city } = req.body;
+    const { id, product, category, amount } = req.body;
 
-    if (!username) {
-        return next(createError(400, 'Username is required'));
+    if (!product || !category) {
+        return next(createError(400, 'Product and category are required'));
     }
 
     let qry;
 
     if (id && id.trim() !== '') {
         qry = {
-            text: `UPDATE public.users SET username=$1, password=$2, phoneno=$3, city=$4 WHERE id=$5`,
-            values: [username, password, number, city, id],
+            text: `UPDATE ecommerce SET product=$1, category=$2, amount=$3 WHERE id=$4`,
+            values: [product, category, amount, id],
         };
     } else {
         qry = {
-            text: `INSERT INTO public.users (username, password, phoneno, city) VALUES ($1, $2, $3, $4)`,
-            values: [username, password, number, city],
+            text: `INSERT INTO ecommerce (product, category, amount) VALUES ($1, $2, $3)`,
+            values: [product, category, amount],
         };
     }
 
     client.query(qry, (error) => {
         if (error) {
             console.error(error);
-            return next(createError(500, 'Database error')); 
+            return next(createError(500, 'Database error'));
         }
         console.log("Data saved successfully");
         res.redirect('/');
@@ -82,13 +80,13 @@ app.post('/createData', (req, res, next) => {
 app.get('/editData', (req, res, next) => {
     const editId = req.query.edit;
 
-    client.query('SELECT * FROM public.users WHERE id = $1', [editId], (error, editResult) => {
+    client.query('SELECT * FROM ecommerce WHERE id = $1', [editId], (error, editResult) => {
         if (error) {
             console.error(error);
             return next(createError(500, 'Database error'));
         }
 
-        client.query('SELECT * FROM public.users ORDER BY id ASC', (error, result) => {
+        client.query('SELECT * FROM ecommerce ORDER BY id ASC', (error, result) => {
             if (error) {
                 console.error(error);
                 return next(createError(500, 'Database error'));
@@ -100,6 +98,7 @@ app.get('/editData', (req, res, next) => {
         });
     });
 });
+
 app.post('/deleteData', (req, res, next) => {
     const { id } = req.body;
 
@@ -108,7 +107,7 @@ app.post('/deleteData', (req, res, next) => {
     }
 
     const qry = {
-        text: `DELETE FROM public.users WHERE id=$1`,
+        text: `DELETE FROM ecommerce WHERE id=$1`,
         values: [id],
     };
 
@@ -122,6 +121,22 @@ app.post('/deleteData', (req, res, next) => {
     });
 });
 
+app.get('/sum', (req, res, next) => {
+    const query = `
+        SELECT category, SUM(amount) AS total_sales
+        FROM ecommerce
+        GROUP BY category
+        ORDER BY category;
+    `;
+
+    client.query(query, (error, result) => {
+        if (error) {
+            console.error(error);
+            return next(createError(500, 'Database error'));
+        }
+        res.render('sum', { sum: result.rows });
+    });
+});
 
 app.use((err, req, res, next) => {
     console.error(err);
